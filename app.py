@@ -106,35 +106,29 @@ def get_news():
 
 @app.route('/api/internships', methods=['GET'])
 def get_internships():
-    query = request.args.get('query', 'internships for undergraduate and graduate students')
-    page = request.args.get('page', 1)
+    discipline = request.args.get('discipline', default='software engineer') 
+    location = request.args.get('location', default='nigeria')
+    state = request.args.get('state', default='lagos')
 
-    params = {
-        "api_key": API_KEY,
-        "engine": "google",
-        "q": query,
-        "start": (int(page) - 1) * 10,
+    api_key = os.getenv("API_KEY")
+
+    internship_params = {
+        "api_key": api_key,
+        "engine": "google_jobs",
+        "q": f"{discipline} internship in {state} {location}",
+        "google_domain": "google.com",
+        "gl": "us",
+        "hl": "en"
     }
-
+    
     try:
-        search = GoogleSearch(params)
-        result = search.get_dict()
-        organic_results = result.get('organic_results', [])
-
-        internships_data = [
-            {
-                "source": result.get("source"),
-                "link": result.get("link"),
-                "favicon": result.get("favicon"),
-                "snippet": result.get("snippet"),
-                "date": result.get("date"),
-            }
-            for result in organic_results
-        ]
-
-        return jsonify({"internships": internships_data})
+        internship_search = GoogleSearch(internship_params)
+        result = internship_search.get_dict()
+        internship_results = result.get('jobs_results', [])
+        return jsonify({"internships": internship_results})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/research-grants', methods=['GET'])
 def get_research_grants():
